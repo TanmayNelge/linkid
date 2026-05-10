@@ -23,6 +23,8 @@ export default function EditProfileCard({
     const [bio, setBio] = useState(initialBio || "");
     const [available, setAvailable] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(false);
+    const [checking, setChecking] = useState(false);
+    const latestRequestId = useRef(0);
 
     async function checkUsername(value: string) {
         setUsername(value);
