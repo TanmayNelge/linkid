@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,19 +23,36 @@ export default function EditProfileCard({
     const [bio, setBio] = useState(initialBio || "");
     const [available, setAvailable] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(false);
+    const [checking, setChecking] = useState(false);
+    const latestRequestId = useRef(0);
 
-    async function checkUsername(value: string) {
+    function checkUsername(value: string) {
         setUsername(value);
+        setAvailable(null);
+    }
 
-        if (value.length < 3 || value === initialUsername) {
+    useEffect(() => {
+        if (username.length < 3 || username === initialUsername) {
             setAvailable(null);
+            setChecking(false);
             return;
         }
 
-        const res = await fetch(`/api/username/check?username=${value}`);
-        const data = await res.json();
-        setAvailable(data.available);
-    }
+        setChecking(true);
+        const requestId = ++latestRequestId.current;
+
+        const timer = setTimeout(async () => {
+            const res = await fetch(`/api/username/check?username=${username}`);
+            const data = await res.json();
+
+            if (requestId === latestRequestId.current) {
+                setAvailable(data.available);
+                setChecking(false);
+            }
+        }, 400);
+
+        return () => clearTimeout(timer);
+    }, [username]);
 
     async function saveChanges() {
         setLoading(true);
@@ -125,6 +142,8 @@ export default function EditProfileCard({
                     onClick={saveChanges}
                     disabled={
                         loading ||
+                        checking ||
+                        username.length < 3 ||
                         (!available && username !== initialUsername)
                     }
                 >
