@@ -4,18 +4,20 @@ on:
   pull_request:
     types: [opened, synchronize]
 
-jobs:
-  request-copilot-review:
-    runs-on: ubuntu-latest
+permissions:
+  pull-requests: write
+  contents: read
 
-    permissions:
-      pull-requests: write
+jobs:
+  request-review:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Request Copilot Review
-        run: |
-          gh api \
-            repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers \
-            -f reviewers[]='github-copilot[bot]'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api \
+            --method POST \
+            repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers \
+            -f reviewers[]='github-copilot[bot]'
